@@ -1,4 +1,4 @@
-package coba
+package contoh
 
 import "fmt"
 
