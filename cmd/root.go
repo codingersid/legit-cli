@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 
 	"github.com/spf13/cobra"
 )
@@ -49,47 +48,34 @@ var runMigrationCmd = &cobra.Command{
 	Short: "Menjalankan migration",
 	Long:  `Menjalankan migration.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Mendapatkan path absolut dari file migration.go
-		migrationFilePath := filepath.Join("database", "migrations", "migration.go")
-		absPath, err := filepath.Abs(migrationFilePath)
+		// Panggil fungsi RunMigration() menggunakan path relatif dari direktori saat ini
+		// Pastikan untuk menyesuaikan dengan struktur direktori proyek Anda
+		err := RunMigration()
 		if err != nil {
-			fmt.Println("Error:", err)
-			return
-		}
-
-		// Melakukan dynamic import menggunakan path absolut
-		migrationModule, err := os.Open(absPath)
-		if err != nil {
-			fmt.Println("Error:", err)
-			return
-		}
-		defer migrationModule.Close()
-
-		// Melakukan pemanggilan fungsi RunMigration secara dynamic
-		err = findAndRunMigrationFunction(migrationModule)
-		if err != nil {
-			fmt.Println("Error:", err)
-			return
+			fmt.Println("Failed to run migration:", err)
+			os.Exit(1)
 		}
 	},
 }
 
-// Fungsi untuk mencari dan menjalankan fungsi RunMigration() dari modul migration
-func findAndRunMigrationFunction(_ *os.File) error {
-	// Implementasi untuk menemukan dan menjalankan fungsi RunMigration()
-	migrationType := reflect.TypeOf((*MigrationInterface)(nil)).Elem()
-	moduleSymbol := reflect.New(migrationType).Interface().(MigrationInterface)
+func RunMigration() error {
+	// Ganti path relatif dengan path ke file migration.go
+	migrationFilePath := "./database/migrations/migration.go"
 
-	moduleValue := reflect.ValueOf(moduleSymbol)
-
-	// Menemukan fungsi RunMigration()
-	runMigrationFunc := moduleValue.MethodByName("RunMigration")
-	if !runMigrationFunc.IsValid() {
-		return fmt.Errorf("RunMigration function not found")
+	// Mengambil direktori saat ini
+	dir, err := os.Getwd()
+	if err != nil {
+		return err
 	}
 
-	// Memanggil fungsi RunMigration()
-	runMigrationFunc.Call(nil)
+	// Menggabungkan direktori saat ini dengan path file migrasi
+	fullPath := filepath.Join(dir, migrationFilePath)
+
+	// Lakukan sesuatu dengan fullPath
+	fmt.Println("Running migration from:", fullPath)
+
+	// Implementasi RunMigration() Anda di sini
+
 	return nil
 }
 
