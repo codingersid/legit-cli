@@ -6,14 +6,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
-
-type MigrationInterface interface {
-	RunMigration()
-}
 
 var version string
 
@@ -43,48 +38,11 @@ var devCmd = &cobra.Command{
 	},
 }
 
-var runMigrationCmd = &cobra.Command{
-	Use:   "runmigration",
-	Short: "Menjalankan migration",
-	Long:  `Menjalankan migration.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		// Panggil fungsi RunMigration() menggunakan path relatif dari direktori saat ini
-		// Pastikan untuk menyesuaikan dengan struktur direktori proyek Anda
-		err := RunMigration()
-		if err != nil {
-			fmt.Println("Failed to run migration:", err)
-			os.Exit(1)
-		}
-	},
-}
-
-func RunMigration() error {
-	// Ganti path relatif dengan path ke file migration.go
-	migrationFilePath := "./database/migrations/migration.go"
-
-	// Mengambil direktori saat ini
-	dir, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	// Menggabungkan direktori saat ini dengan path file migrasi
-	fullPath := filepath.Join(dir, migrationFilePath)
-
-	// Lakukan sesuatu dengan fullPath
-	fmt.Println("Running migration from:", fullPath)
-
-	// Implementasi RunMigration() Anda di sini
-
-	return nil
-}
-
 func Execute(ver string) {
 	version = ver
 
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(devCmd)
-	rootCmd.AddCommand(runMigrationCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
