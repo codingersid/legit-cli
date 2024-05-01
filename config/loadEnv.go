@@ -3,12 +3,17 @@ package config
 import (
 	"bufio"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 func LoadEnv() map[string]string {
 	env := make(map[string]string)
-	file, err := os.Open(".env")
+
+	// Path ke file .env, relative terhadap working directory aplikasi
+	envFilePath := filepath.Join("..", ".env")
+
+	file, err := os.Open(envFilePath)
 	if err != nil {
 		panic("Error loading .env file")
 	}
