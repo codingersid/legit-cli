@@ -9,7 +9,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type CliRootConfig struct {
+	FuncMigration interface{}
+	FuncSeeder    interface{}
+}
+
+type MigrationInterface interface {
+	RunMigration()
+}
+
 var version string
+var migration interface{}
 
 var rootCmd = &cobra.Command{
 	Use:   "legit",
@@ -29,9 +39,24 @@ var versionCmd = &cobra.Command{
 	},
 }
 
+var runMigrationCmd = &cobra.Command{
+	Use:   "runmigration",
+	Short: "Menjalankan migration",
+	Long:  `Menjalankan migration.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if m, ok := migration.(MigrationInterface); ok {
+			m.RunMigration()
+		} else {
+			fmt.Println("Invalid migration type")
+		}
+	},
+}
+
 func Execute(ver string) {
 	version = ver
+
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(runMigrationCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

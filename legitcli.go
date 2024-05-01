@@ -3,7 +3,7 @@ package legit
 import "github.com/codingersid/legit-cli/cmd"
 
 func LegitCommand() {
-	cmd.Execute("v.1.0.3")
+	cmd.Execute("v1.0.4")
 }
 
 // func main() {
