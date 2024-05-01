@@ -13,6 +13,12 @@ func LoadEnv() map[string]string {
 	// Path ke file .env, relative terhadap working directory aplikasi
 	envFilePath := filepath.Join("..", ".env")
 
+	// Cek apakah file .env ada di lokasi yang ditentukan
+	if _, err := os.Stat(envFilePath); os.IsNotExist(err) {
+		// Jika file .env tidak ditemukan, kembali ke lokasi root aplikasi
+		envFilePath = ".env"
+	}
+
 	file, err := os.Open(envFilePath)
 	if err != nil {
 		panic("Error loading .env file")
