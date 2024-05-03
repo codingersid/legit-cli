@@ -1,4 +1,4 @@
-package main
+package legit
 
 import "github.com/codingersid/legit-cli/cmd"
 
