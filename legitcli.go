@@ -1,9 +1,9 @@
-package legit
+package main
 
 import "github.com/codingersid/legit-cli/cmd"
 
 func LegitCommand() {
-	cmd.Execute("v1.0.8")
+	cmd.Execute("v1.1.0")
 }
 
 // func main() {

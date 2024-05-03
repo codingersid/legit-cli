@@ -42,7 +42,7 @@ func createSeeder(name string) error {
 import (
 	"log"
 	
-	"[ganti_dengan_mod_project_anda]/app/models"
+	//"[ganti_dengan_mod_project_anda]/app/models"
 	"gorm.io/gorm"
 )
 
