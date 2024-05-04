@@ -37,6 +37,7 @@ var controllerCmd = &cobra.Command{
 func createController(name string) error {
 	nameParts := strings.Split(name, "/")
 	packageName := strings.ToLower(nameParts[len(nameParts)-1])
+	pageName := ucword(packageName)
 	controllerPath := fmt.Sprintf("app/http/controllers/%s/controller.go", strings.ToLower(name))
 	err := os.MkdirAll(fmt.Sprintf("app/http/controllers/%s", strings.ToLower(name)), os.ModePerm)
 	if err != nil {
@@ -53,44 +54,60 @@ func createController(name string) error {
 	code := fmt.Sprintf(`package %s
 
 import (
+	legitConfig "github.com/codingersid/legit-cli/config"
 	"github.com/gofiber/fiber/v2"
 )
 
 // Index adalah handler untuk menampilkan halaman utama.
 func Index(c *fiber.Ctx) error {
-	return c.SendString("Ini adalah halaman utama.")
+	data := fiber.Map{
+		"Page": "Index %s",
+	}
+	return legitConfig.Views("sample", data)(c)
 }
 
 // Create adalah handler untuk tambah data.
 func Create(c *fiber.Ctx) error {
-	return c.SendString("Ini adalah tambah data.")
+	data := fiber.Map{
+		"Page": "Create %s",
+	}
+	return legitConfig.Views("sample", data)(c)
 }
 
 // Store adalah handler untuk tambah data.
 func Store(c *fiber.Ctx) error {
-	return c.SendString("Ini adalah tambah data.")
+	return c.SendString("Store untuk tambah data dengan method POST.")
 }
 
 // View adalah handler untuk menampilkan detail data.
 func View(c *fiber.Ctx) error {
-	return c.SendString("Ini adalah menampilkan detail data.")
+	Id := c.Params("id")
+	data := fiber.Map{
+		"Page": "View %s : " + Id,
+	}
+	return legitConfig.Views("sample", data)(c)
 }
 
 // Edit adalah handler untuk menampilkan halaman edit.
 func Edit(c *fiber.Ctx) error {
-	return c.SendString("Ini adalah menampilkan halaman edit.")
+	Id := c.Params("id")
+	data := fiber.Map{
+		"Page": "Edit %s: " + Id,
+	}
+	return legitConfig.Views("sample", data)(c)
 }
 
 // Update adalah handler untuk mengubah data.
 func Update(c *fiber.Ctx) error {
-	return c.SendString("Ini adalah mengubah data.")
+	return c.SendString("Update untuk mengubah data dengan method PUT.")
 }
 
 // Destroy adalah handler untuk menghapus data.
 func Destroy(c *fiber.Ctx) error {
-	return c.SendString("Ini adalah menghapus data.")
+	return c.SendString("Destroy untuk menghapus data dengan method DELETE.")
 }
-`, packageName)
+
+`, packageName, pageName, pageName, pageName, pageName)
 
 	_, err = file.WriteString(code)
 	if err != nil {
