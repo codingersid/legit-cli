@@ -53,10 +53,7 @@ func createController(name string) error {
 	code := fmt.Sprintf(`package %s
 
 import (
-	//"log"
-
 	"github.com/gofiber/fiber/v2"
-	//"github.com/gofiber/template/django/v3"
 )
 
 // Index adalah handler untuk menampilkan halaman utama.
