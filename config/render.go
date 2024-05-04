@@ -11,7 +11,7 @@ func Views(viewName string, data fiber.Map) fiber.Handler {
 
 func ViewsWithLayout(viewName string, data fiber.Map, layoutName string) fiber.Handler {
 	viewName = "views/pages/" + viewName
-	layoutName = "views/layouts/" + viewName
+	layoutName = "views/layouts/" + layoutName
 	return func(c *fiber.Ctx) error {
 		return c.Render(viewName, data, layoutName)
 	}
