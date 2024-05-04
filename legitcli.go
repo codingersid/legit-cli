@@ -3,5 +3,5 @@ package legit
 import "github.com/codingersid/legit-cli/cmd"
 
 func LegitCommand() {
-	cmd.Execute("v1.1.0")
+	cmd.Execute("v1.1.1")
 }
