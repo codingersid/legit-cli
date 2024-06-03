@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -14,27 +15,47 @@ var requestCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		requestName := args[0]
-		err := createRequest(requestName)
+		nameParts := strings.Split(requestName, "/")
+		requestNameFile := SnakeCase(nameParts[len(nameParts)-1])
+		status, err := createRequest(requestName)
 		if err != nil {
 			fmt.Println("Gagal membuat request:", err)
 			return
 		}
-		fmt.Println("Request", requestName, "berhasil dibuat!")
+
+		if status == "exist" {
+			fmt.Println("Gagal membuat request, request", requestNameFile, "sudah ada!")
+			return
+		}
+		fmt.Println("Request", requestNameFile, "berhasil dibuat!")
 	},
 }
 
-func createRequest(name string) error {
+func createRequest(name string) (string, error) {
+	status := "failed"
 	nameParts := strings.Split(name, "/")
-	packageName := strings.ToLower(nameParts[len(nameParts)-1])
-	requestPath := fmt.Sprintf("app/http/requests/%s/request.go", strings.ToLower(name))
-	err := os.MkdirAll(fmt.Sprintf("app/http/requests/%s", strings.ToLower(name)), os.ModePerm)
+	requestNameFile := SnakeCase(nameParts[len(nameParts)-1])
+
+	if strings.Contains(name, "/") {
+		return status, errors.New("nama_request yang anda masukkan tidak boleh sebagai path")
+	}
+
+	err := os.MkdirAll("app/http/requests", os.ModePerm)
 	if err != nil {
-		return err
+		return status, err
+	}
+
+	requestPath := fmt.Sprintf("app/http/requests/%s.go", requestNameFile)
+	if _, err := os.Stat(requestPath); err == nil {
+		status = "exist"
+		return status, nil
+	} else if !os.IsNotExist(err) {
+		return status, err
 	}
 
 	file, err := os.Create(requestPath)
 	if err != nil {
-		return err
+		return status, err
 	}
 	defer file.Close()
 
@@ -56,14 +77,15 @@ type (
 		// tambahkan struct lainnya
 	}
 )
-`, packageName)
+`, requestNameFile)
 
 	_, err = file.WriteString(code)
 	if err != nil {
-		return err
+		return status, err
 	}
 
-	return nil
+	status = "success"
+	return status, nil
 }
 
 func init() {

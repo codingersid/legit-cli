@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -13,26 +15,48 @@ var modelCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		modelName := args[0]
-		err := createModel(modelName)
+		nameParts := strings.Split(modelName, "/")
+		modelNameFile := SnakeCase(nameParts[len(nameParts)-1])
+		status, err := createModel(modelName)
 		if err != nil {
 			fmt.Println("Gagal membuat model:", err)
 			return
 		}
-		fmt.Println("model", modelName, "berhasil dibuat!")
+
+		if status == "exist" {
+			fmt.Println("Gagal membuat model, model", modelNameFile, "sudah ada!")
+			return
+		}
+		fmt.Println("Model", modelNameFile, "berhasil dibuat!")
 	},
 }
 
-func createModel(name string) error {
-	nameTable := CamelToSnake(name)
+func createModel(name string) (string, error) {
+	status := "failed"
+	nameParts := strings.Split(name, "/")
+	tableName := SnakeCase(nameParts[len(nameParts)-1])
+	modelPackageName := PathToUCWord(tableName)
+
+	if strings.Contains(name, "/") {
+		return status, errors.New("nama_model yang anda masukkan tidak boleh sebagai path")
+	}
+
 	err := os.MkdirAll("app/models", os.ModePerm)
 	if err != nil {
-		return err
+		return status, err
 	}
-	modelPath := fmt.Sprintf("app/models/%sModel.go", name)
+
+	modelPath := fmt.Sprintf("app/models/%s.go", tableName)
+	if _, err := os.Stat(modelPath); err == nil {
+		status = "exist"
+		return status, nil
+	} else if !os.IsNotExist(err) {
+		return status, err
+	}
 
 	file, err := os.Create(modelPath)
 	if err != nil {
-		return err
+		return status, err
 	}
 	defer file.Close()
 
@@ -65,14 +89,15 @@ type %sResponseProtection struct {
 func (%s) TableName() string {
     return "%s"
 }
-`, name, name, name, nameTable)
+`, modelPackageName, modelPackageName, modelPackageName, tableName)
 
 	_, err = file.WriteString(code)
 	if err != nil {
-		return err
+		return status, err
 	}
 
-	return nil
+	status = "success"
+	return status, nil
 }
 
 func init() {

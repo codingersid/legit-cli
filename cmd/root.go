@@ -38,12 +38,10 @@ var devCmd = &cobra.Command{
 	},
 }
 
-func Execute(ver string) {
-	version = ver
-
+func Execute() {
+	version = "v1.2.0" //versi legit-cli
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(devCmd)
-
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

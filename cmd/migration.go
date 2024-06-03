@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -13,38 +15,60 @@ var migrationCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		migrationName := args[0]
-		err := createMigration(migrationName)
+		nameParts := strings.Split(migrationName, "/")
+		migrationNameFile := SnakeCase(nameParts[len(nameParts)-1])
+		status, err := createMigration(migrationName)
 		if err != nil {
 			fmt.Println("Gagal membuat migration:", err)
 			return
 		}
-		fmt.Println("Migration", migrationName, "berhasil dibuat!")
+
+		if status == "exist" {
+			fmt.Println("Gagal membuat migration, migration", migrationNameFile, "sudah ada!")
+			return
+		}
+		fmt.Println("Migration", migrationNameFile, "berhasil dibuat!")
 	},
 }
 
-func createMigration(name string) error {
-	nameTable := CamelToSnake(name)
+func createMigration(name string) (string, error) {
+	status := "failed"
+	nameParts := strings.Split(name, "/")
+	tableName := SnakeCase(nameParts[len(nameParts)-1])
+	migrationPackageName := PathToUCWord(tableName)
+
+	if strings.Contains(name, "/") {
+		return status, errors.New("nama_migration yang anda masukkan tidak boleh sebagai path")
+	}
+
 	err := os.MkdirAll("database/migrations", os.ModePerm)
 	if err != nil {
-		return err
+		return status, err
 	}
-	migrationPath := fmt.Sprintf("database/migrations/%sTable.go", name)
+
+	migrationPath := fmt.Sprintf("database/migrations/%s.go", tableName)
+	if _, err := os.Stat(migrationPath); err == nil {
+		status = "exist"
+		return status, nil
+	} else if !os.IsNotExist(err) {
+		return status, err
+	}
 
 	file, err := os.Create(migrationPath)
 	if err != nil {
-		return err
+		return status, err
 	}
 	defer file.Close()
 
 	// Isi file migration
 	code := "package migrations\n\nimport (\n\t\"log\"\n\t\"gorm.io/gorm\"\n)\n\n" +
-		"// tabel " + name + "\n" +
-		"func " + name + "Table(db *gorm.DB) {\n" +
+		"// tabel " + tableName + "\n" +
+		"func " + migrationPackageName + "(db *gorm.DB) {\n" +
 		"\t// versi 1\n" +
-		"\tif !db.Migrator().HasTable(\"" + nameTable + "\") {\n" +
+		"\tif !db.Migrator().HasTable(\"" + tableName + "\") {\n" +
 		"\t\t// Jika tidak ada, maka buat tabel\n" +
 		"\t\tif err := db.Exec(`\n" +
-		"\t\t\tCREATE TABLE " + nameTable + " (\n" +
+		"\t\t\tCREATE TABLE " + tableName + " (\n" +
 		"\t\t\t\tid VARCHAR(36) PRIMARY KEY,\n" +
 		"\t\t\t\t// Tambahkan kolom lainnya pada table\n" +
 		"\t\t\t\tcreated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n" +
@@ -59,10 +83,11 @@ func createMigration(name string) error {
 
 	_, writeErr := file.WriteString(code)
 	if writeErr != nil {
-		return writeErr
+		return status, writeErr
 	}
 
-	return nil
+	status = "success"
+	return status, nil
 }
 
 func init() {

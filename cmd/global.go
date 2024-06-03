@@ -2,10 +2,8 @@ package cmd
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"unicode"
 
@@ -50,19 +48,80 @@ func CamelToSnake(s string) string {
 	return buf.String()
 }
 
-// ucword
-func ucword(s string) string {
-	// Menghilangkan karakter non-alphanumeric dan mengonversi ke camel case
-	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
-	if err != nil {
-		fmt.Println("Error compiling regex:", err)
-		return ""
+// SnakeCase digunakan untuk mengubah string menjadi format snake_case
+func SnakeCase(str string) string {
+	var result []rune
+	for i, char := range str {
+		if unicode.IsUpper(char) {
+			// Add underscore before uppercase letters (except the first letter)
+			if i > 0 && unicode.IsLower(rune(str[i-1])) {
+				result = append(result, '_')
+			}
+			result = append(result, unicode.ToLower(char))
+		} else if char == ' ' || char == '-' {
+			// Replace spaces and hyphens with underscores
+			result = append(result, '_')
+		} else {
+			result = append(result, char)
+		}
 	}
-	words := strings.Split(reg.ReplaceAllString(s, " "), " ")
+	return string(result)
+}
+
+// Mengubah SnakeCase menjadi UC WORD
+func SnakeCaseToUCWord(str string) string {
+	words := strings.Split(str, "_")
 	for i, word := range words {
 		if len(word) > 0 {
-			words[i] = strings.ToUpper(string(word[0])) + word[1:]
+			words[i] = string(unicode.ToUpper(rune(word[0]))) + word[1:]
+		}
+	}
+	return strings.Join(words, " ")
+}
+
+// Mengubah SnakeCase menjadi strip
+func SnakeCaseToStrip(str string) string {
+	return strings.ReplaceAll(str, "_", "-")
+}
+
+// UcWordFileFromSnake
+func UcWordFileFromSnake(str string) string {
+	words := strings.Split(str, "_")
+	for i, word := range words {
+		if len(word) > 0 {
+			words[i] = string(unicode.ToUpper(rune(word[0]))) + word[1:]
 		}
 	}
 	return strings.Join(words, "")
+}
+
+// PathToUCWord digunakan untuk mengubah path menjadi format UC Word yang di-merge
+func PathToUCWord(path string) string {
+	// Split path by slash
+	parts := strings.Split(path, "/")
+	var result []string
+	for _, part := range parts {
+		// Convert each part from snake_case to UC Word
+		ucWord := UcWordFileFromSnake(part)
+		result = append(result, ucWord)
+	}
+	// Merge all parts together
+	return strings.Join(result, "")
+}
+
+// TransformPath digunakan untuk views, merubah path terakhir jadi file html
+func TransformPath(oldPath string) string {
+	// Split the path into components
+	parts := strings.Split(oldPath, "/")
+	// Ignore the last part of the path
+	if len(parts) > 0 {
+		parts = parts[:len(parts)-1]
+	}
+	// Transform each part to lowercase and replace '-' with '_'
+	for i, part := range parts {
+		parts[i] = SnakeCase(part)
+	}
+	// Join the parts back into a new path
+	newPath := strings.Join(parts, "/")
+	return newPath
 }
